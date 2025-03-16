@@ -1,0 +1,149 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Перетягивание каната</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+        }
+        .score {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 2em;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="score">0 : 0</div>
+    <canvas id="ropeCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('ropeCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.querySelector('.score');
+        let playerScore = 0;
+        let opponentScore = 0;
+
+        // Screen adaptation
+        function resizeCanvas() {
+            canvas.width = window.innerWidth * 0.9;
+            canvas.height = window.innerHeight * 0.8;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Ball object
+        class Ball {
+            constructor() {
+                this.radius = 25;
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2;
+                this.speedX = 0;
+                this.speedY = 0;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2);
+                ctx.fillStyle = '#e74c3c';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(231,76,60,0.5)';
+                ctx.fill();
+                ctx.closePath();
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                
+                // Boundary checks
+                if(this.x - this.radius < 0) {
+                    this.reset();
+                    opponentScore++;
+                    scoreDisplay.textContent = `${opponentScore} : ${playerScore}`;
+                }
+                if(this.x + this.radius > canvas.width) {
+                    this.reset();
+                    playerScore++;
+                    scoreDisplay.textContent = `${opponentScore} : ${playerScore}`;
+                }
+            }
+            reset() {
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2;
+                this.speedX = 0;
+                this.speedY = 0;
+            }
+        }
+
+        const ball = new Ball();
+
+        // Game loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background elements
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ball.draw();
+            ball.update();
+            
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // Touch controls
+        let lastTouchX = 0;
+        function handleTouch(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const touchX = touch.clientX - rect.left;
+            
+            const direction = touchX < lastTouchX ? -1 : 1;
+            ball.speedX += direction * 3;
+            ball.speedY += (ball.y - canvas.height/2) * 0.05;
+            
+            lastTouchX = touchX;
+        }
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
+
+        // Mouse controls (for desktop testing)
+        let lastMouseX = 0;
+        function handleMouse(e) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            
+            const direction = mouseX < lastMouseX ? -1 : 1;
+            ball.speedX += direction * 3;
+            ball.speedY += (ball.y - canvas.height/2) * 0.05;
+            
+            lastMouseX = mouseX;
+        }
+        canvas.addEventListener('mousedown', handleMouse);
+        canvas.addEventListener('mousemove', handleMouse);
+    </script>
+</body>
+</html>
+```
